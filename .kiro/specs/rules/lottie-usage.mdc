@@ -1,0 +1,98 @@
+---
+description: Standardized Lottie animation implementation pattern using LottieIsland component for SSR compatibility
+alwaysApply: false
+---
+
+# Lottie Animation Usage Rule
+
+## Overview
+
+Use the `LottieIsland` component for all Lottie animations to ensure SSR compatibility and prevent build failures.
+
+## Import Pattern
+
+```typescript
+import LottieIsland from "@/components/LottieIsland";
+import AnimationData from "@/lottie/path/to/animation.json";
+```
+
+## Usage Pattern
+
+```typescript
+<LottieIsland
+  config={{
+    animationData: AnimationData,
+    loop: true,
+    autoplay?: boolean  // optional, defaults to library default
+  }}
+  height="400px"        // optional
+  width="200px"         // optional
+  className="mt-3"      // optional
+/>
+```
+
+## Rules
+
+1. **NEVER** import `{ Lottie }` directly from `@alfonmga/react-lottie-light-ts`
+2. **ALWAYS** use `LottieIsland` component for all Lottie animations
+3. **ALWAYS** structure the `config` prop with:
+   - `animationData`: The imported JSON animation data
+   - `loop`: Boolean for whether animation should loop
+   - `autoplay`: Optional boolean for autoplay behavior
+4. Use optional props (`height`, `width`, `className`) as needed for styling
+5. Import animation JSON files from the `@/lottie/` directory
+
+## Why This Pattern?
+
+- Prevents SSR "window is not defined" errors during build
+- Ensures consistent API across the application
+- Centralizes Lottie configuration in one component
+- Maintains dynamic loading for performance
+
+## Examples
+
+### Loading Animation
+
+```typescript
+import LottieIsland from "@/components/LottieIsland";
+import DogLoader from "@/lottie/loaders/dog_running.json";
+
+<LottieIsland
+  config={{
+    animationData: DogLoader,
+    loop: true
+  }}
+  width="68px"
+  className="mt-3"
+/>
+```
+
+### No Data State
+
+```typescript
+import LottieIsland from "@/components/LottieIsland";
+import NoData from "@/lottie/no-data.json";
+
+<LottieIsland
+  config={{
+    animationData: NoData,
+    loop: true
+  }}
+  width="200px"
+/>
+```
+
+### Campaign Illustration
+
+```typescript
+import LottieIsland from "@/components/LottieIsland";
+import NoCampaigns from "@/lottie/no-campaigns.json";
+
+<LottieIsland
+  config={{
+    animationData: NoCampaigns,
+    loop: true
+  }}
+  height="400px"
+/>
+```

@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+
+---
+
+Never use the component or file of src/archive/* in import of any other components or file, it is only for knowledge base and if you wanted to use that create a same file in the /src/* and then use it, also make sure, if it also depends upon any other files then import that too.

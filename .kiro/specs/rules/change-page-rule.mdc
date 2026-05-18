@@ -1,0 +1,27 @@
+---
+alwaysApply: true
+---
+
+whenenver we change the page in the current dashboard and if we have the query "p_id" value then make sure to use the p_id in the redirection of the user
+
+example : 
+```
+   const handleViewCampaign = () => {
+     if (createdCampaign) {
+       create_campaign.toggle(false);
+       const newQuery = { ...query };
+       delete newQuery?.m;
+       // Ensure p_id is always included in redirect
+       const p_id = (query?.p_id as string) || projectId;
+       push({
+         query: {
+           ...newQuery,
+           ...(p_id && { p_id }),
+           campaign: createdCampaign.display_id,
+         },
+       });
+     }
+   };
+   ```
+
+also make sure to use p_id or project_id from the rootContext from all the project instead of getting it from the router, useRouter()

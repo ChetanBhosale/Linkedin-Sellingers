@@ -1,0 +1,85 @@
+---
+alwaysApply: true
+description: Strict guidelines for integrating Figma components/pages into the codebase, ensuring consistency with existing architecture, design system, and API patterns.
+globs: ["**/*.tsx", "**/*.ts", "**/*.jsx", "**/*.js"] # Apply to all relevant source files
+---
+# Development Rules: Figma to Codebase Integration
+**Mandatory Enforcement:** These rules apply to every task involving Figma MCP (Main Component Page) to codebase migration. Non-compliance triggers immediate rework. Prioritize research, reuse, and verification for codebase integrity.
+## 0. Initial Clarification & Context Gathering (First Step - Always Execute)
+- **Ask Questions Proactively:** Before any coding or research, initiate a dialogue by asking a comprehensive set of questions to deeply understand the feature, interactions, edge cases, and requirements. Aim for 5-10 targeted questions per session.
+  - Cover: Functionality (e.g., "What user actions trigger this?"), Data flows (e.g., "What APIs/queries are involved?"), States (e.g., "Describe loading/error/success states."), Accessibility/Edge cases (e.g., "How should it handle mobile? Any ARIA needs?"), Dependencies (e.g., "Integrate with existing context/hooks?").
+  - **No Question is Dumb:** Ask even seemingly obvious details (e.g., "Confirm icon usage here? Exact colors/sizes from Figma?") to eliminate assumptions. Iterate questions based on responses until full clarity is achieved.
+  - **Document Responses:** Summarize answers in a temp note or PR description for reference. Only proceed once context is exhaustive—pause if gaps remain.
+**Violation Flag:** Skipping clarification = Immediate halt; revert any premature work.
+## 1. Research & Reuse Existing Patterns
+- **Before Coding:**
+  - Review `src/archive/*` for similar components/pages. Analyze structure, API endpoints, queries, data flows, error handling, and caching.
+  - Specifically, navigate to `src/archive/components/`, `src/archive/pages/`, and `src/archive/layouts/` to understand previous implementations of API fetching and usage patterns (e.g., hooks, queries, mutations, caching strategies). Identify and extract reusable logic, such as data fetching hooks or API integration examples, to inform the new component's build.
+  - Extract insights (e.g., via inline comments) to replicate proven implementations. Only after thorough analysis of archive patterns should you proceed to building the new component, ensuring alignment with historical API handling.
+- **Current Codebase Scan:**
+  - Audit `src/components/` for reusable elements (e.g., buttons, forms). Extend or compose them—**no duplication allowed**.
+- **API/Data Layer Review (Exclusive Use):**
+  - Study `src/data/` (schemas, constants), `src/lib/` (utils), `src/hooks/` (state/API logic), `src/context/` (global providers).
+  - Map Figma to these: Use existing hooks for fetching/mutations (e.g., React Query patterns). Validate flows with dry runs (e.g., mock data).
+**Violation Flag:** Introducing new API wrappers or unproven patterns = Halt and revert.
+## 2. UI Build with Shadcn & Design System
+- **Shadcn Foundation (Non-Negotiable):**
+  - Base all UI on Shadcn: `npx shadcn-ui@latest add [component]`.
+  - For new/adapted components:
+    - Override via `global.css` (CSS vars: colors, spacing) and `tailwind.config.ts` (themes: breakpoints, fonts).
+    - Test: Responsiveness, modes (dark/light), accessibility (ARIA, keyboard nav).
+  - **Component Availability Check:** Always check `/src/components/ui/` first for existing Shadcn primitives. If no suitable component found, add it immediately via Shadcn CLI (`npx shadcn-ui@latest add [component]`) and integrate/customize per design system rules.
+  - **Design System Alignment for Additions/Adaptations:** If adding any new Shadcn component to `/src/components/ui` or retrieving/adapting a component from `/src/archive/components`, ensure it fully adheres to our design system. Override all styles (e.g., colors, typography, spacing) via `global.css` and `tailwind.config.ts` to match our tokens and themes—no default Shadcn styling allowed.
+  - **Loading States (Mandatory for Data Fetching):** When building components that involve data fetching (e.g., via hooks from `src/hooks/` or React Query), implement skeleton loading effects using Shadcn's Skeleton component (`npx shadcn-ui@latest add skeleton`). Ensure skeletons mirror the structure and layout of the final loaded content for smooth transitions. Integrate loading logic directly in the component (e.g., conditional rendering based on `isLoading` from the hook), and test for seamless fade-ins or animations during state changes.
+- **Pre-Build Planning (Mandatory):** Before building any component (new, adapted, or from Shadcn/archive), create a full detailed plan. Conduct extensive research on the build approach: Outline architecture (structure, props, variants, states), integration points (APIs, hooks), potential reusability, and alignment with existing patterns (cross-reference sections 0 & 1). Document the plan (e.g., in a markdown note or PR draft) and validate feasibility before implementation.
+- **Composition Rule:** Primitives only (e.g., Button, Card). Avoid raw HTML/CSS.
+- **Icons (Mandatory Library):**
+  - Use `@phosphor-icons/react` for all icons: Install via `npm i @phosphor-icons/react`.
+  - Import icons (e.g., `import { House } from 'phosphor-react';`) and apply design system styles (e.g., via Tailwind classes for color, size, weight).
+  - Ensure icons are accessible (e.g., with aria-labels) and theme-aware (e.g., stroke colors from CSS vars).
+  - No other icon libraries—replace existing if needed during integration.
+- **Reusable Component Identification:**
+  - During integration, evaluate if any Figma element/pattern warrants a new reusable component (e.g., appears in multiple pages, handles common logic/states).
+  - If yes: Create in `/src/components/` as a standalone, exportable file (e.g., `NewReusableComponent.tsx`). Create new components as needed to maintain modularity—do not force-fit into existing ones.
+  - **Production-Grade Standards:**
+    - **Modular:** Prop-based API (TypeScript interfaces for props, defaults, variants). Composable (slots/children support).
+    - **Scalable:** Theme-aware (via CSS vars), variant props (e.g., size, color), forwardRef for integration.
+    - **Quality:** Full TypeScript typing, error boundaries if stateful, memoization for perf, unit-testable (e.g., Storybook-ready).
+    - Export as default + named for tree-shaking.
+**Violation Flag:** Non-Shadcn elements, non-Phosphor icons, unadded missing Shadcn components (including Skeleton for data fetching), unaligned design system adaptations, missing pre-build plans, unextracted reusables, or missing skeleton loading for data-dependent components = Reject PR.
+## 3. Verification Gates
+- **Screenshot Ritual:**
+  1. **Pre-Build:** Screenshot Figma MCP. Annotate states/interactions.
+  2. **Post-Build:** Render in dev; screenshot at matching views.
+  3. **Compare:** Pixel-match vs. Figma (Dev Mode/inspect). Target 95%+ fidelity.
+  4. **Shadcn MCP Check:** Validate component rules (e.g., states, hovers).
+- **If Mismatch:** Document, iterate until resolved. Re-verify.
+- **Full QA:**
+  - **Functional:** End-to-end API tests (loads, errors, dynamics).
+  - **Perf:** Bundle size <5% delta (`vite build --report`).
+  - **A11y:** Lighthouse ≥90.
+  - **Commits:** Semantic (e.g., "feat: Figma-to-code Dashboard v1").
+**Violation Flag:** No screenshots/checklist in PR = Auto-reject.
+## 4. Follow Accesibility guidelines as per the industry standard
+## ✅ Short Rule
+- Use `<a>` for navigation (route changes).
+- Use `<button>` for actions (modals, toggles, commands).
+- Use `<div>` only for layout — never for clickable elements.
+## 🧭 Guideline
+### 1. Use `<a>` for navigation
+Use `<a>` when the sidebar item navigates to another page or route.
+Examples: Dashboard → /dashboard, Analytics → /analytics, Billing → /billing.
+Industry standard: Stripe, Vercel, Linear, GitHub.
+### 2. Use `<button>` for actions
+Use `<button>` when the item performs an in-app action.
+Examples: Create Project, Toggle Theme, Open Command Menu, Collapse Sidebar.
+Reason: Proper semantics, full accessibility, keyboard support.
+### 3. Use `<div>` only for layout
+Never use `<div>` as an interactive element.
+Avoid patterns like:
+## Enforcement & Tools
+- **Strict Mode:** Pause on ambiguity—escalate via ticket.
+- **IDE Aids:** VS Code: Tailwind IntelliSense, Shadcn snippets.
+- **PR Mandate:** Include screenshots, rule checklist links, and clarification summary.
+Adhere rigidly to accelerate delivery while upholding quality. Reference in PRs for audit trails.
+---

@@ -1,0 +1,409 @@
+---
+description: "Standardized drawer implementation pattern with query-based state management"
+alwaysApply: true
+---
+
+# Drawer Implementation Pattern
+
+**CRITICAL: Drawers use query parameters (`d=drawer-name`) for URL-based state management, allowing deep linking and browser history support.**
+
+## 1. Register the Drawer
+
+In `src/hooks/use-drawer.tsx`, add your key and slug to `DRAWERS`:
+
+```ts
+export const DRAWERS = {
+  // …existing entries
+  your_new_drawer: "your-new-drawer"
+} as const;
+```
+
+## 2. Create the Drawer Component
+
+**ALWAYS use the Drawer component structure:**
+
+```tsx
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerFooter, // Optional, only if you have footer actions
+  DrawerTitle, // Optional, for drawer title
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  // Add other props as needed
+};
+
+export const YourNewDrawer = ({ open, onOpenChange }: Props) => {
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent side="right" width="70%"> {/* Use: "left" | "right" | "top" | "bottom" */}
+        <DrawerHeader>
+          <DrawerTitle>Your Drawer Title</DrawerTitle>
+          {/* Optional header content */}
+        </DrawerHeader>
+
+        <DrawerBody>
+          {/* Your drawer content here */}
+        </DrawerBody>
+
+        {/* Optional footer - only include if you have action buttons */}
+        <DrawerFooter>
+          {/* Footer content with buttons */}
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
+};
+
+export default YourNewDrawer;
+```
+
+**For drawers WITH data:**
+
+```tsx
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerFooter,
+} from "@/components/ui/drawer";
+import { useDrawers } from "@/hooks/use-drawer";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export const YourNewDrawer = ({ open, onOpenChange }: Props) => {
+  const { your_new_drawer } = useDrawers();
+  const drawerData = your_new_drawer.data;
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent side="right" width="70%">
+        <DrawerHeader>
+          <DrawerTitle>Your Drawer Title</DrawerTitle>
+        </DrawerHeader>
+
+        <DrawerBody>
+          {/* Access drawer data via `drawerData` */}
+          {drawerData && <div>Received: {JSON.stringify(drawerData)}</div>}
+        </DrawerBody>
+      </DrawerContent>
+    </Drawer>
+  );
+};
+
+export default YourNewDrawer;
+```
+
+## 3. Drawer Content Props
+
+### Side Options:
+- `side="right"` - Opens from right (most common)
+- `side="left"` - Opens from left
+- `side="top"` - Opens from top
+- `side="bottom"` - Opens from bottom
+
+### Width/Height:
+- For `side="left"` or `side="right"`: Use `width` prop (string like `"70%"` or number like `500`)
+- For `side="top"` or `side="bottom"`: Use `height` prop (string like `"400px"` or number like `400`)
+
+### Common Patterns:
+
+```tsx
+// Right side drawer (most common)
+<DrawerContent side="right" width="70%">
+
+// Left side drawer
+<DrawerContent side="left" width={500}>
+
+// Bottom drawer
+<DrawerContent side="bottom" height="400px">
+```
+
+## 4. Wire it up
+
+In the layout or page where the drawer belongs:
+
+```tsx
+import { useDrawers } from "@/hooks/use-drawer";
+import YourNewDrawer from "@/components/your-new-drawer";
+
+const SomePage = () => {
+  const { your_new_drawer } = useDrawers();
+
+  return (
+    <>
+      {/* …other content… */}
+
+      <YourNewDrawer 
+        open={your_new_drawer.state} 
+        onOpenChange={(open) => your_new_drawer.toggle(open)} 
+      />
+    </>
+  );
+};
+```
+
+## 5. Opening & Closing Drawers
+
+**Basic usage (no data):**
+
+```ts
+const { your_new_drawer } = useDrawers();
+your_new_drawer.toggle(true); // open
+your_new_drawer.toggle(false); // close
+```
+
+**With data passing:**
+
+```ts
+const { your_new_drawer } = useDrawers();
+
+// Open with data
+your_new_drawer.toggle(true, {
+  data: { userId: 123, name: "John" }
+});
+
+// Set data without opening
+your_new_drawer.setData({ userId: 456 });
+
+// Access current data
+console.log(your_new_drawer.data);
+
+// Clear data
+your_new_drawer.clearData();
+```
+
+**Using the convenience hook:**
+
+```ts
+import { useDrawerWithData } from "@/hooks/use-drawer";
+
+const { openWithData, close, data } = useDrawerWithData("your_new_drawer");
+
+// Open with data
+openWithData({ userId: 123, response: apiResponse });
+
+// Close drawer
+close();
+```
+
+## 6. Query Parameter Management
+
+**How it works:**
+- Drawers use `d=drawer-name` query parameter to track state
+- When drawer opens: `?d=your-new-drawer` is added to URL
+- When drawer closes: `d` parameter is removed from URL
+- This enables deep linking and browser back/forward navigation
+
+**Special handling for campaign_details drawer:**
+- Automatically adds `campaign=display_id` when opening with campaign data
+- Automatically removes `campaign` parameter when closing
+
+**Preserving other query parameters:**
+
+```ts
+// By default, other query params are preserved
+your_new_drawer.toggle(true);
+
+// To clear all query params when opening:
+your_new_drawer.toggle(true, { clearQuery: true });
+
+// To maintain history (use push instead of replace):
+your_new_drawer.toggle(true, { maintainHistory: true });
+```
+
+## 7. Data Management
+
+- Data is automatically stored in localStorage with key `drawer_data_{drawer-name}`
+- Data is automatically cleared when drawer closes
+- Data persists across page refreshes while drawer is open
+- Data is automatically cleaned up when switching between drawers
+- Maximum data size: 3MB (larger data will show an error)
+
+## 8. Reading Data from Query Parameters
+
+**For drawers that need to fetch data based on query params:**
+
+```tsx
+import { useRouter } from "next/router";
+import { useDrawers } from "@/hooks/use-drawer";
+
+export const YourNewDrawer = ({ open, onOpenChange }: Props) => {
+  const router = useRouter();
+  const { your_new_drawer } = useDrawers();
+  
+  // Get data from query params
+  const itemId = router.query?.item_id as string;
+  const drawerData = your_new_drawer.data;
+  
+  // Fetch data if needed
+  const { data } = useQuery({
+    queryKey: ["item", itemId],
+    queryFn: () => fetchItem(itemId),
+    enabled: !!itemId && open,
+  });
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      {/* ... */}
+    </Drawer>
+  );
+};
+```
+
+## 9. Complete Example
+
+Here's a complete example following all conventions:
+
+```tsx
+import { useState, useCallback } from "react";
+import { useRouter } from "next/router";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerBody,
+  DrawerFooter,
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { useDrawers } from "@/hooks/use-drawer";
+import { useToast } from "@/components/ui/use-toast";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export const ExampleDrawer = ({ open, onOpenChange }: Props) => {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { example_drawer } = useDrawers();
+  const drawerData = example_drawer.data;
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = useCallback(async () => {
+    setIsLoading(true);
+    // Your async logic here
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsLoading(false);
+    toast({ title: "Success!" });
+    onOpenChange(false);
+  }, [onOpenChange, toast]);
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent side="right" width="70%">
+        <DrawerHeader>
+          <DrawerTitle>Example Drawer</DrawerTitle>
+        </DrawerHeader>
+
+        <DrawerBody>
+          <div className="flex flex-col gap-4">
+            {drawerData && (
+              <div>Received data: {JSON.stringify(drawerData)}</div>
+            )}
+            {/* Your drawer content here */}
+          </div>
+        </DrawerBody>
+
+        <DrawerFooter>
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              variant="outlined"
+              size="md"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+              type="button"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleSave}
+              disabled={isLoading}
+              loading={isLoading}
+              type="button"
+            >
+              Save
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
+};
+
+export default ExampleDrawer;
+```
+
+## 10. Best Practices
+
+### Performance:
+- Use lazy loading for drawer child components:
+```tsx
+const DrawerContent = lazy(() => import("./DrawerContent").then(m => ({ default: m.DrawerContent })));
+```
+
+- Memoize expensive computations and handlers:
+```tsx
+const memoizedHandler = useCallback(() => {
+  // handler logic
+}, [dependencies]);
+```
+
+### Query Parameter Handling:
+- **Always preserve important query params** (like `p_id`, `from`, `to`) when opening/closing drawers
+- Use `clearQuery: true` only when you want to reset the entire query state
+- For campaign_details drawer, the `campaign` param is automatically managed
+
+### Data Fetching:
+- Use query params as the primary source of truth for drawer data
+- Fall back to localStorage data if query params are not available
+- Always check if drawer is open before fetching data: `enabled: open && !!itemId`
+
+### State Management:
+- Use drawer data from `useDrawers()` hook for passing data
+- Use query params for IDs or identifiers that should be in the URL
+- Clear local state when drawer closes or when relevant query params change
+
+## Key Rules Summary
+
+✅ **ALWAYS:**
+- Use `Drawer`, `DrawerContent`, `DrawerHeader`, `DrawerBody`, `DrawerFooter` from `@/components/ui/drawer`
+- Register drawer in `DRAWERS` constant in `use-drawer.tsx`
+- Use `useDrawers()` hook to manage drawer state
+- Use query parameters (`d=drawer-name`) for URL-based state
+- Preserve important query params (like `p_id`) when opening/closing
+- Use `side="right"` with `width="70%"` for most drawers
+- Check `open` prop before fetching data
+- Clear data when drawer closes
+
+❌ **NEVER:**
+- Use local state for drawer open/close (always use `useDrawers()` hook)
+- Remove important query params (like `p_id`, `from`, `to`) when opening drawers
+- Fetch data unconditionally (always check `open` and required params)
+- Store large data (>3MB) in drawer data
+- Use `Dialog` components for drawer-like UI (use `Drawer` instead)
+
+## Differences from Modals
+
+| Feature | Modals | Drawers |
+|---------|--------|---------|
+| Query Param | `m=modal-name` | `d=drawer-name` |
+| Hook | `useModals()` | `useDrawers()` |
+| Component | `ModalRoot`, `ModalContent` | `Drawer`, `DrawerContent` |
+| Position | Centered overlay | Side panel (left/right/top/bottom) |
+| Use Case | Forms, confirmations | Details, settings, side panels |

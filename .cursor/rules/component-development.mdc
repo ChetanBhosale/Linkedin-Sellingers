@@ -1,0 +1,534 @@
+---
+description: "Component development best practices: props patterns, design system usage, reusability, and code quality"
+alwaysApply: true
+---
+
+# Component Development Best Practices
+
+## 1. Props Pattern Consistency
+
+**CRITICAL: Always check existing UI components in `/src/components/ui` to understand props patterns before creating new components.**
+
+### Icon Props Pattern
+
+When adding icons to components, follow the established patterns:
+
+**Button Component Pattern:**
+```tsx
+// Button uses: leftIcon, rightIcon, dropdownIcon
+<Button 
+  leftIcon={<Icon />} 
+  rightIcon={<Icon />}
+  dropdownIcon={<CaretDown />}
+>
+  Text
+</Button>
+```
+
+**Input Component Pattern:**
+```tsx
+// Input uses: iconLeading, iconTrailing
+<Input 
+  iconLeading={<SearchIcon />}
+  iconTrailing={<ClearIcon />}
+/>
+```
+
+**Badge/Chip Pattern:**
+```tsx
+// Badge and Chip use: leftIcon
+<Badge leftIcon={<Icon />}>Label</Badge>
+<Chip leftIcon={<Icon />}>Label</Chip>
+```
+
+### Standard Props Pattern
+
+**ALWAYS follow these patterns when creating reusable components:**
+
+1. **Extend HTML element props:**
+```tsx
+export interface MyComponentProps 
+  extends React.HTMLAttributes<HTMLDivElement> {
+  // Custom props
+  variant?: "primary" | "secondary";
+  size?: "sm" | "md" | "lg";
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  // ... other props
+}
+```
+
+2. **Use forwardRef for DOM access:**
+```tsx
+const MyComponent = React.forwardRef<HTMLDivElement, MyComponentProps>(
+  ({ className, variant, size, leftIcon, rightIcon, children, ...props }, ref) => {
+    return (
+      <div ref={ref} className={cn(/* styles */)} {...props}>
+        {leftIcon && <span>{leftIcon}</span>}
+        {children}
+        {rightIcon && <span>{rightIcon}</span>}
+      </div>
+    );
+  }
+);
+MyComponent.displayName = "MyComponent";
+```
+
+3. **Use VariantProps for variant-based styling:**
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+const componentVariants = cva(
+  "base-classes",
+  {
+    variants: {
+      variant: {
+        primary: "primary-classes",
+        secondary: "secondary-classes",
+      },
+      size: {
+        sm: "small-classes",
+        md: "medium-classes",
+        lg: "large-classes",
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+      size: "md",
+    },
+  }
+);
+
+export interface MyComponentProps 
+  extends VariantProps<typeof componentVariants> {
+  // ... other props
+}
+```
+
+4. **Icon size mapping pattern:**
+```tsx
+const iconSizes = {
+  sm: "w-3.5 h-3.5", // or size={14}
+  md: "w-[18px] h-[18px]", // or size={18}
+  lg: "w-5 h-5", // or size={20}
+};
+
+const iconSizeClass = size ? iconSizes[size] : iconSizes.md;
+```
+
+## 2. Design System Usage
+
+**ALWAYS use design system tokens from `tailwind.config.ts` and `src/styles/globals.css`.**
+
+### Color Usage
+
+**Use semantic color tokens, NOT hardcoded colors:**
+
+```tsx
+// ✅ CORRECT - Use semantic tokens
+className="bg-primary text-primary border-default"
+className="bg-status-success text-status-success"
+className="text-tertiary border-light"
+
+// ❌ WRONG - Don't use hardcoded colors
+className="bg-white text-black border-gray-300"
+className="bg-green-500 text-green-600"
+```
+
+**Available Semantic Colors:**
+
+**Background:**
+- `bg-primary`, `bg-secondary`, `bg-tertiary`
+- `bg-elevated-primary`, `bg-elevated-secondary`
+- `bg-status-warning`, `bg-status-error`, `bg-status-success`, `bg-status-info`, `bg-status-neutral`
+
+**Text:**
+- `text-primary`, `text-secondary`, `text-tertiary`, `text-placeholder`
+- `text-status-warning`, `text-status-error`, `text-status-success`, `text-status-info`, `text-status-neutral`
+
+**Border:**
+- `border-default`, `border-light`, `border-heavy`, `border-selected`
+- `border-status-warning`, `border-status-error`, `border-status-success`, `border-status-info`
+
+**Interactive:**
+- `interactive-surface-default`, `interactive-surface-hover`, `interactive-surface-pressed`
+- `interactive-text-default`, `interactive-text-hover`, `interactive-text-pressed`
+
+**Icon:**
+- `icon-primary`, `icon-secondary`, `icon-tertiary`, `icon-disabled`
+- `icon-status-warning`, `icon-status-error`, `icon-status-success`, `icon-status-info`
+
+### Typography Usage
+
+**Use typography tokens from Tailwind config:**
+
+```tsx
+// ✅ CORRECT - Use typography tokens
+className="text-heading1" // 36px, line-height: 40px
+className="text-heading2" // 24px, line-height: 30px
+className="text-heading3" // 18px, line-height: 26px
+className="text-body-lg" // 16px, line-height: 26px
+className="text-body-md" // 14px, line-height: 20px
+className="text-body-sm" // 12px, line-height: 16px
+className="text-button-md" // 14px, line-height: 18px
+className="text-label-md" // 14px
+className="text-badge-label-md" // 12px
+
+// ❌ WRONG - Don't use arbitrary font sizes
+className="text-[16px] leading-[20px]"
+```
+
+### Spacing Usage
+
+**Use spacing scale from design system:**
+
+```tsx
+// ✅ CORRECT - Use spacing tokens
+className="gap-2" // 8px (spacing-2)
+className="p-4" // 16px (spacing-4)
+className="mb-6" // 24px (spacing-6)
+
+// Available: 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32
+```
+
+### Border Radius Usage
+
+**Use radius tokens:**
+
+```tsx
+// ✅ CORRECT
+className="rounded-sm" // 4px
+className="rounded-md" // 8px
+className="rounded-lg" // 12px
+className="rounded-xl" // 16px
+className="rounded-full" // 9999px
+
+// ❌ WRONG
+className="rounded-[8px]"
+```
+
+### CSS Variables in Inline Styles
+
+**When you need inline styles, use CSS variables:**
+
+```tsx
+// ✅ CORRECT
+<div style={{ backgroundColor: "var(--bg-primary)" }}>
+<div style={{ color: "var(--text-primary)" }}>
+<div style={{ borderColor: "var(--border-default)" }}>
+
+// ❌ WRONG
+<div style={{ backgroundColor: "#ffffff" }}>
+```
+
+## 3. Production-Grade Code Standards
+
+### Component Structure
+
+**ALWAYS follow this structure for reusable components:**
+
+```tsx
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+// 1. Define variants using CVA
+const componentVariants = cva(
+  "base-classes",
+  {
+    variants: {
+      variant: { /* ... */ },
+      size: { /* ... */ },
+    },
+    defaultVariants: { /* ... */ },
+  }
+);
+
+// 2. Define props interface
+export interface MyComponentProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof componentVariants> {
+  // Custom props
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
+
+// 3. Implement component with forwardRef
+const MyComponent = React.forwardRef<HTMLDivElement, MyComponentProps>(
+  ({ className, variant, size, leftIcon, rightIcon, children, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(componentVariants({ variant, size }), className)}
+        {...props}
+      >
+        {leftIcon && <span className="icon-wrapper">{leftIcon}</span>}
+        {children}
+        {rightIcon && <span className="icon-wrapper">{rightIcon}</span>}
+      </div>
+    );
+  }
+);
+
+// 4. Set display name for debugging
+MyComponent.displayName = "MyComponent";
+
+// 5. Export component and variants
+export { MyComponent, componentVariants };
+```
+
+### TypeScript Best Practices
+
+**ALWAYS:**
+- Use proper TypeScript interfaces for props
+- Extend HTML element attributes when appropriate
+- Use `React.ReactNode` for children and icons
+- Use `as const` for literal types
+- Export types/interfaces for external use
+
+```tsx
+// ✅ CORRECT
+export interface ButtonProps 
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "secondary";
+  leftIcon?: React.ReactNode;
+}
+
+// ❌ WRONG
+export interface ButtonProps {
+  variant: string; // Too loose
+  leftIcon: any; // Too loose
+}
+```
+
+### Accessibility
+
+**ALWAYS include accessibility features:**
+
+```tsx
+// ✅ CORRECT
+<button
+  aria-label="Close dialog"
+  aria-disabled={disabled}
+  disabled={disabled}
+>
+  <Icon aria-hidden="true" />
+  Close
+</button>
+
+// For loading states
+{loading && (
+  <CircleNotch 
+    className="animate-spin"
+    aria-label="Loading"
+  />
+)}
+```
+
+### Performance Optimization
+
+**Use React optimization patterns:**
+
+```tsx
+// 1. Memoize expensive computations
+const memoizedValue = useMemo(() => {
+  return expensiveCalculation(data);
+}, [data]);
+
+// 2. Memoize callbacks
+const handleClick = useCallback(() => {
+  // handler logic
+}, [dependencies]);
+
+// 3. Memoize components when appropriate
+export const MyComponent = memo(function MyComponent({ ... }) {
+  // component logic
+});
+```
+
+## 4. Check for Existing Components
+
+**CRITICAL: Before creating a new component, ALWAYS check if similar functionality exists.**
+
+### Search Strategy
+
+1. **Search in `/src/components/ui`** for base components:
+   ```bash
+   # Look for: Button, Input, Badge, Chip, Card, etc.
+   ```
+
+2. **Search in `/src/components`** for feature components:
+   ```bash
+   # Look for similar components in campaigns/, dashboard/, etc.
+   ```
+
+3. **Search the codebase** for similar patterns:
+   ```bash
+   # Use codebase_search to find similar implementations
+   ```
+
+### When to Reuse vs Create
+
+**REUSE existing component if:**
+- Similar functionality exists (even if styling differs)
+- You can extend it with props/variants
+- It follows the same pattern you need
+
+**CREATE new component if:**
+- No similar functionality exists
+- Existing component cannot be extended without breaking changes
+- It's a fundamentally different UI pattern
+
+### Example: Extending Existing Components
+
+```tsx
+// ✅ CORRECT - Extend existing Button
+<Button 
+  variant="outlined"
+  size="md"
+  leftIcon={<Icon />}
+  onClick={handleClick}
+>
+  Custom Action
+</Button>
+
+// ❌ WRONG - Don't create new button component
+// Instead, use existing Button with appropriate props
+```
+
+### Component Composition
+
+**Prefer composition over creating new components:**
+
+```tsx
+// ✅ CORRECT - Compose existing components
+<div className="flex items-center gap-2">
+  <Badge variant="success" leftIcon={<CheckIcon />}>
+    Active
+  </Badge>
+  <Button variant="outlined" size="sm">
+    Edit
+  </Button>
+</div>
+
+// ❌ WRONG - Don't create monolithic component
+// Instead, compose smaller components
+```
+
+## 5. File Organization
+
+### Component File Structure
+
+```
+src/components/
+├── ui/                    # Base UI components (Button, Input, etc.)
+│   └── button.tsx
+├── feature-name/          # Feature-specific components
+│   ├── FeatureComponent.tsx
+│   └── index.ts           # Re-exports
+└── shared/                # Shared reusable components
+    └── SharedComponent.tsx
+```
+
+### Export Pattern
+
+```tsx
+// ✅ CORRECT - Named exports for components
+export { MyComponent } from "./MyComponent";
+export type { MyComponentProps } from "./MyComponent";
+
+// ✅ CORRECT - Default export for pages/features
+export default function MyPage() { /* ... */ }
+```
+
+## 6. Code Quality Checklist
+
+Before submitting a component, ensure:
+
+- [ ] ✅ Uses design system tokens (colors, typography, spacing)
+- [ ] ✅ Follows props pattern from existing UI components
+- [ ] ✅ Uses `forwardRef` for DOM access
+- [ ] ✅ Proper TypeScript types and interfaces
+- [ ] ✅ Accessible (ARIA labels, keyboard navigation)
+- [ ] ✅ Handles loading/error/disabled states
+- [ ] ✅ No hardcoded colors or values
+- [ ] ✅ Uses `cn()` utility for className merging
+- [ ] ✅ Exports types for external use
+- [ ] ✅ Has displayName for debugging
+- [ ] ✅ Documented with JSDoc comments
+- [ ] ✅ No unused code or imports
+- [ ] ✅ Follows existing code style
+
+## 7. Common Patterns Reference
+
+### Icon with Text Pattern
+
+```tsx
+<div className="flex items-center gap-2">
+  <Icon className="w-4 h-4 text-icon-secondary" />
+  <span className="text-body-md text-primary">Label</span>
+</div>
+```
+
+### Loading State Pattern
+
+```tsx
+{loading ? (
+  <CircleNotch 
+    className="w-4 h-4 animate-spin text-icon-secondary"
+    aria-label="Loading"
+  />
+) : (
+  <Icon className="w-4 h-4" />
+)}
+```
+
+### Error State Pattern
+
+```tsx
+{error && (
+  <div className="flex items-center gap-2 text-status-error">
+    <WarningIcon className="w-4 h-4" />
+    <span className="text-body-sm">{errorMessage}</span>
+  </div>
+)}
+```
+
+### Disabled State Pattern
+
+```tsx
+const isDisabled = disabled || loading;
+
+<button
+  disabled={isDisabled}
+  className={cn(
+    "base-classes",
+    isDisabled && "opacity-50 cursor-not-allowed"
+  )}
+>
+  {children}
+</button>
+```
+
+## Key Rules Summary
+
+✅ **ALWAYS:**
+- Check `/src/components/ui` for props patterns before creating components
+- Use design system tokens from `tailwind.config.ts` and `globals.css`
+- Search for existing components before creating new ones
+- Use `forwardRef` for DOM access
+- Follow established icon prop patterns (`leftIcon`, `rightIcon`, `iconLeading`, `iconTrailing`)
+- Use semantic color tokens, not hardcoded colors
+- Use typography tokens, not arbitrary font sizes
+- Export TypeScript types/interfaces
+- Include accessibility features
+- Use `cn()` utility for className merging
+
+❌ **NEVER:**
+- Use hardcoded colors (use semantic tokens)
+- Use arbitrary font sizes (use typography tokens)
+- Create duplicate components (reuse/extend existing)
+- Skip TypeScript types
+- Ignore accessibility
+- Use inline styles for colors (use CSS variables)
+- Create components without checking for existing similar ones

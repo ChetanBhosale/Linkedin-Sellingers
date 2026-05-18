@@ -1,0 +1,109 @@
+# Implementation Plan
+
+- [x] 1. Update modal header and basic structure
+  - [x] 1.1 Update ModalHeader to show "Create Campaign" title with close button (X icon)
+    - Remove ModalDescription component
+    - Style close button with border and rounded corners per Figma design
+    - _Requirements: 1.3, 1.4_
+  - [x] 1.2 Update modal content wrapper with proper padding and gap spacing
+    - Set content wrapper to 550px width with 20px padding
+    - Set 20px gap between form sections
+    - _Requirements: 1.1_
+
+- [x] 2. Implement basic form fields section
+  - [x] 2.1 Update Campaign Name field styling
+    - Update label to "Campaign Name" with red asterisk for required
+    - Set placeholder to "Insta profile link..."
+    - Apply 34px height, 10px horizontal padding, 6px border radius
+    - _Requirements: 1.1, 1.2_
+  - [x] 2.2 Update Website redirection field styling
+    - Update label to "Website redirection for desktop users" (no asterisk)
+    - Set placeholder to "https://www.alle.com/"
+    - Apply same input styling as Campaign Name
+    - _Requirements: 2.1, 2.2, 2.3_
+  - [x] 2.3 Update Display ID field styling
+    - Update label to "Display ID" (no asterisk)
+    - Set placeholder to "Insta-profile-link"
+    - Maintain existing sanitization logic for allowed characters
+    - _Requirements: 3.1, 3.2, 3.3_
+
+- [x] 3. Update Deferred Deep Linking section
+  - [x] 3.1 Replace checkbox with Switch toggle component
+    - Use Switch component with "Enable Deferred deeplinking?" label
+    - Add description text below: "Direct users to a specific page in your app after installation from the store."
+    - Style toggle with 43px width, 24px height
+    - _Requirements: 4.1_
+  - [x] 3.2 Update conditional Deeplink destination field
+    - Show field only when toggle is enabled
+    - Update label to "Deeplink destination" with red asterisk
+    - Display domain prefix (https://dl.linkrunner.io/) in primary text color
+    - _Requirements: 4.2, 4.3, 4.4_
+
+- [x] 4. Implement collapsible Advanced Options section
+  - [x] 4.1 Create AdvancedOptionsSection wrapper component
+    - Add secondary background color (#f9f9fb) with 8px padding and 8px border radius
+    - Implement expand/collapse state with chevron icon rotation
+    - Show right chevron when collapsed, down chevron when expanded
+    - _Requirements: 5.1, 5.2, 5.3, 5.5_
+  - [x] 4.2 Move Ad Channel selector into Advanced Options
+    - Add "Ad Channel" label with info tooltip icon
+    - Style as dropdown with caret icon
+    - Maintain existing ad channel options and handler logic
+    - _Requirements: 5.4, 6.1, 6.2, 6.3_
+  - [x] 4.3 Update Shorten link and Open in App checkboxes
+    - Style checkboxes with 16px size and purple checked state
+    - Update labels to "Shorten link" and "Open in App"
+    - Stack vertically with 20px gap
+    - _Requirements: 5.4, 7.1, 7.2, 7.3, 7.4_
+  - [x] 4.4 Move Domain selector into Advanced Options
+    - Add "Domain" label with info tooltip icon
+    - Add "Manage Domains" helper text link below dropdown
+    - Maintain existing domain selection logic
+    - _Requirements: 5.4, 8.1, 8.2, 8.3, 8.4_
+  - [x] 4.5 Move Store Listing selector into Advanced Options
+    - Add "Redirect to Custom store listing" label with info tooltip icon
+    - Add "Manage Domains" helper text link below dropdown
+    - Set "None" as default option
+    - _Requirements: 5.4, 9.1, 9.2, 9.3_
+
+- [x] 5. Update modal footer actions
+  - [x] 5.1 Replace Cancel/Create buttons with Back, Skip, Next
+    - Add "Back" button on left side with outlined style
+    - Add "Skip" button with text/link style in purple color
+    - Add "Next" button with primary purple background
+    - _Requirements: 10.1_
+  - [x] 5.2 Implement footer button handlers
+    - Back button: close modal and reset form state
+    - Skip button: close modal without saving (same as Back for now)
+    - Next button: validate and submit form (replaces Create)
+    - _Requirements: 10.2, 10.3, 10.4_
+  - [x] 5.3 Add loading state to footer
+    - Disable all buttons during submission
+    - Show loading spinner on Next button
+    - _Requirements: 10.5_
+
+- [x] 6. Maintain API integration and success flow
+  - [x] 6.1 Ensure form submission uses existing mutation hook
+    - Keep useCreateCampaignMutation hook unchanged
+    - Pass all form values to API as before
+    - _Requirements: 11.1_
+  - [x] 6.2 Verify success screen displays correctly
+    - Keep CampaignSuccessScreen component unchanged
+    - Ensure campaign details are passed correctly
+    - _Requirements: 11.2_
+  - [x] 6.3 Verify error handling works correctly
+    - Keep toast notifications for API errors
+    - Maintain 400/402 error handling logic
+    - _Requirements: 11.3_
+  - [x] 6.4 Verify form reset on modal close
+    - Reset form state when modal closes
+    - Clear cached data and selections
+    - _Requirements: 11.4_
+
+- [x] 7. Final polish and cleanup
+  - [x] 7.1 Remove unused imports and components
+    - Remove old "More options" button implementation
+    - Clean up any unused styling classes
+  - [x] 7.2 Verify responsive behavior
+    - Ensure modal displays correctly at different viewport sizes
+    - Test scrolling behavior for long content

@@ -1,33 +1,61 @@
-"use client"
+import * as React from "react";
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 
-import * as React from "react"
-import { Checkbox as CheckboxPrimitive } from "radix-ui"
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
-import { CheckIcon } from "lucide-react"
+const sizeVariants = {
+  sm: {
+    root: "h-4 w-4",
+    icon: "h-3 w-3",
+  },
+  md: {
+    root: "h-5 w-5",
+    icon: "h-4 w-4",
+  },
+  lg: {
+    root: "h-6 w-6",
+    icon: "h-5 w-5",
+  },
+};
 
-function Checkbox({
-  className,
-  ...props
-}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
-  return (
-    <CheckboxPrimitive.Root
-      data-slot="checkbox"
-      className={cn(
-        "peer relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input transition-colors outline-none group-has-disabled/field:opacity-50 after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary",
-        className
-      )}
-      {...props}
-    >
-      <CheckboxPrimitive.Indicator
-        data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
-      >
-        <CheckIcon
-        />
-      </CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Root>
-  )
+interface CheckboxProps
+  extends React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> {
+  size?: "sm" | "md" | "lg";
 }
 
-export { Checkbox }
+const Checkbox = React.forwardRef<
+  React.ElementRef<typeof CheckboxPrimitive.Root>,
+  CheckboxProps
+>(({ className, size = "md", ...props }, ref) => (
+  <CheckboxPrimitive.Root
+    ref={ref}
+    className={cn(
+      "peer shrink-0 rounded-sm border border-default bg-primary ring-offset-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-surface-default focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 hover:border-heavy hover:bg-alpha-2 data-[state=checked]:bg-interactive-surface-default data-[state=checked]:text-interactive-surface-onsurface data-[state=checked]:border-[var(--alpha-10)] data-[state=checked]:shadow-[0_1px_3px_0_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.14)] data-[state=checked]:hover:bg-interactive-surface-hover cursor-pointer",
+      sizeVariants[size].root,
+      className
+    )}
+    {...props}
+  >
+    <CheckboxPrimitive.Indicator
+      className={cn("flex items-center justify-center text-current")}
+    >
+      <svg
+        className={cn(sizeVariants[size].icon, "animate-check-draw")}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path
+          d="M5 12l5 5L19 7"
+          className="[stroke-dasharray:24] [stroke-dashoffset:24] animate-[check-stroke_200ms_ease-out_forwards]"
+        />
+      </svg>
+    </CheckboxPrimitive.Indicator>
+  </CheckboxPrimitive.Root>
+));
+Checkbox.displayName = CheckboxPrimitive.Root.displayName;
+
+export { Checkbox };

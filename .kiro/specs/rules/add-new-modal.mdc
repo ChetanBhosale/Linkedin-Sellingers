@@ -1,0 +1,148 @@
+---
+description: "Standardized modal implementation pattern"
+alwaysApply: false
+---
+
+When adding a new modal:
+
+1. **Register the modal**  
+   In `src/hooks/use-modal.tsx`, add your key and slug to `MODALS`:
+
+   ```ts
+   export const MODALS = {
+     // …existing entries
+     your_new_modal: "your-new-modal"
+   };
+   ```
+
+2. **Create the component**  
+   For modals WITHOUT data:
+
+   ```tsx
+   import { Dialog, DialogContent } from "@/components/ui/dialog";
+
+   type Props = {
+     open: boolean;
+     onOpenChange: (open: boolean) => void;
+   };
+
+   export const YourNewModal = ({ open, onOpenChange }: Props) => (
+     <Dialog open={open} onOpenChange={onOpenChange}>
+       <DialogContent>{/* Your modal content here */}</DialogContent>
+     </Dialog>
+   );
+
+   export default YourNewModal;
+   ```
+
+   For modals WITH data:
+
+   ```tsx
+   import { Dialog, DialogContent } from "@/components/ui/dialog";
+   import { useModalWithData } from "@/hooks/use-modal";
+
+   type Props = {
+     open: boolean;
+     onOpenChange: (open: boolean) => void;
+   };
+
+   export const YourNewModal = ({ open, onOpenChange }: Props) => {
+     const { data } = useModalWithData("your_new_modal");
+
+     return (
+       <Dialog open={open} onOpenChange={onOpenChange}>
+         <DialogContent>
+           {/* Access modal data via `data` */}
+           {data && <div>Received: {JSON.stringify(data)}</div>}
+         </DialogContent>
+       </Dialog>
+     );
+   };
+
+   export default YourNewModal;
+   ```
+
+3. **Wire it up**  
+   In the layout or page where the modal belongs:
+
+   ```tsx
+   import { useModals } from "@/hooks/use-modal";
+   import YourNewModal from "@/components/modals/your-new-modal";
+
+   const SomePage = () => {
+     const { your_new_modal } = useModals();
+
+     return (
+       <>
+         {/* …other content… */}
+
+         <YourNewModal open={your_new_modal.state} onOpenChange={your_new_modal.toggle} />
+       </>
+     );
+   };
+   ```
+
+4. **Opening & closing**
+
+   **Basic usage (no data):**
+
+   ```ts
+   const { your_new_modal } = useModals();
+   your_new_modal.toggle(true); // open
+   your_new_modal.toggle(false); // close
+   ```
+
+   **With data passing:**
+
+   ```ts
+   const { your_new_modal } = useModals();
+
+   // Open with data
+   your_new_modal.toggle(true, {
+     data: { userId: 123, name: "John" }
+   });
+
+   // Set data without opening
+   your_new_modal.setData({ userId: 456 });
+
+   // Access current data
+   console.log(your_new_modal.data);
+
+   // Clear data
+   your_new_modal.clearData();
+   ```
+
+   **Using the convenience hook:**
+
+   ```ts
+   import { useModalWithData } from "@/hooks/use-modal";
+
+   const { openWithData, close, data } = useModalWithData("your_new_modal");
+
+   // Open with data
+   openWithData({ userId: 123, response: apiResponse });
+
+   // Close modal
+   close();
+   ```
+
+5. **Data Management**
+   - Data is automatically stored in localStorage with key `modal_data_{modal-name}`
+   - Data is automatically cleared when modal closes
+   - Data persists across page refreshes while modal is open
+   - Data is automatically cleaned up when switching between modals
+
+## Migration Guide
+
+**Existing modals continue to work unchanged!** The refactor is backward compatible.
+
+**To add data passing to existing modals:**
+
+1. Import `useModalWithData` in your modal component
+2. Use `const { data } = useModalWithData('modal_key')` to access data
+3. Use the new data passing methods when opening modals
+   ```ts
+   const { your_new_modal } = useModals();
+   your_new_modal.toggle(true); // open
+   your_new_modal.toggle(false); // close
+   ```

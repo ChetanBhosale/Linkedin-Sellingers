@@ -1,49 +1,119 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
+// Badge variant styles
+const variantStyles = {
+  success: "bg-status-success text-status-success border-status-success",
+  warning: "bg-status-warning text-status-warning border-status-warning",
+  info: "bg-status-info text-status-info border-status-info",
+  default: "bg-status-neutral text-status-neutral border-status-neutral",
+  error: "bg-status-error text-status-error border-status-error",
+};
 
-const badgeVariants = cva(
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
-        secondary:
-          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
-        destructive:
-          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
-        outline:
-          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
-        ghost:
-          "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
+// Badge size styles
+const sizeStyles = {
+  sm: "h-4 px-2 text-badge-label-sm leading-badge-label-sm tracking-badge-label-sm",
+  md: "h-5 px-3 text-badge-label-md leading-badge-label-md tracking-badge-label-md",
+  lg: "h-6 px-4 text-badge-label-lg leading-badge-label-lg tracking-badge-label-lg",
+};
 
-function Badge({
-  className,
-  variant = "default",
-  asChild = false,
-  ...props
-}: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : "span"
+// Icon size mapping
+const iconSizeMap = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+} as const;
 
-  return (
-    <Comp
-      data-slot="badge"
-      data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
-      {...props}
-    />
-  )
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "success" | "warning" | "info" | "default" | "error";
+  size?: "sm" | "md" | "lg";
+  leftIcon?: React.ReactNode;
+  children: React.ReactNode;
 }
 
-export { Badge, badgeVariants }
+function Badge({
+  className = "",
+  variant = "default",
+  size = "md",
+  leftIcon,
+  children,
+  ...props
+}: BadgeProps) {
+  const iconSize = iconSizeMap[size];
+
+  // Build base classes
+  const baseClasses =
+    "inline-flex items-center border border-solid font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-sm gap-1.5 hover:opacity-90 active:opacity-80";
+
+  // Get variant classes
+  const variantClass = variantStyles[variant] || variantStyles.default;
+
+  // Get size classes
+  const sizeClass = sizeStyles[size] || sizeStyles.md;
+
+  // Combine all classes
+  const combinedClasses = `${baseClasses} ${variantClass} ${sizeClass} ${className}`.trim();
+
+  // Render icon helper
+  const renderIcon = (icon: React.ReactNode) => {
+    if (!icon) return null;
+
+    if (React.isValidElement(icon)) {
+      const iconProps = (icon as React.ReactElement<any>).props || {};
+      const isLucideIcon =
+        "width" in iconProps ||
+        (icon.type && typeof icon.type === "function");
+
+      // For Lucide icons, add size props directly
+      if (isLucideIcon) {
+        return React.cloneElement(icon as React.ReactElement<any>, {
+          className: `flex-shrink-0 ${iconProps.className || ""}`.trim(),
+          width: iconSize,
+          height: iconSize,
+          strokeWidth: 2,
+        });
+      }
+
+      // For other icons, wrap in a span with inline styles
+      return (
+        <span
+          className="flex-shrink-0 inline-flex items-center justify-center"
+          style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
+        >
+          {React.cloneElement(icon as React.ReactElement<any>, {
+            style: {
+              width: `${iconSize}px`,
+              height: `${iconSize}px`,
+              ...iconProps.style,
+            },
+          })}
+        </span>
+      );
+    }
+
+    // For non-React elements, wrap in span
+    return (
+      <span
+        className="flex-shrink-0 inline-flex items-center justify-center"
+        style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
+      >
+        {icon}
+      </span>
+    );
+  };
+
+  return (
+    <div className={combinedClasses} {...props}>
+      {leftIcon && (
+        <span
+          className="flex items-center justify-center flex-shrink-0"
+          style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
+        >
+          {renderIcon(leftIcon)}
+        </span>
+      )}
+      {children && <span className="whitespace-nowrap select-none">{children}</span>}
+    </div>
+  );
+}
+
+export { Badge };

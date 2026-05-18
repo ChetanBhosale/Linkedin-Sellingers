@@ -1,0 +1,236 @@
+---
+description: "React Query API integration best practices and efficient patterns"
+alwaysApply: true
+---
+
+# React Query API Integration Best Practices
+
+## Query Key Structure
+
+Always use arrays for query keys with descriptive, hierarchical structure:
+
+```typescript
+// ✅ Good
+queryKey: ["campaigns", projectId, { status: "active", page: 1 }];
+queryKey: ["domain_status", projectId, domainId];
+queryKey: ["user"];
+
+// ❌ Bad
+queryKey: "campaigns";
+queryKey: ["campaigns" + projectId];
+```
+
+## Standard Query Configuration
+
+### Required Options
+
+Always use `select` to extract data from the standard `IResponse<T>` wrapper:
+
+```typescript
+const { data } = useQuery({
+  queryKey: ["resource", id],
+  queryFn: () => api.getResource(id),
+  select: (res) => res.data, // Extract from IResponse wrapper
+  enabled: !!id // Always use enabled for dependent queries
+});
+```
+
+### Stale Time Guidelines
+
+- **User data**: `staleTime: 60000` (1 minute)
+- **Project data**: `staleTime: 30000` (30 seconds)
+- **Real-time status**: `staleTime: 5000` (5 seconds)
+- **Static config**: `staleTime: 300000` (5 minutes)
+
+### Smart Polling Pattern
+
+Use polling that stops when conditions are met:
+
+```typescript
+refetchInterval: (query) => {
+  const data = query.state.data;
+  if (data?.isComplete) {
+    return false; // Stop polling
+  }
+  return 10000; // Poll every 10 seconds
+},
+refetchIntervalInBackground: false
+```
+
+## Custom Hook Patterns
+
+Create focused, reusable hooks:
+
+```typescript
+export const useProjectDomains = (projectId: string) => {
+  return useQuery({
+    queryKey: ["selected_project", projectId],
+    queryFn: ({ queryKey }) =>
+      project.get({
+        project_id: parseInt(queryKey[1] as string)
+      }),
+    enabled: !!projectId,
+    select: (res) => res.data?.[0]?.domains || [],
+    staleTime: 30000
+  });
+};
+```
+
+## Mutation Best Practices
+
+### Standard Structure
+
+```typescript
+export const useCreateResource = (projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateResourceRequest) => api.createResource({ project_id: parseInt(projectId), ...data }),
+
+    onSuccess: (response) => {
+      toast({
+        title: "Resource created successfully!"
+      });
+
+      // Invalidate related queries
+      queryClient.invalidateQueries({
+        queryKey: ["resources", projectId]
+      });
+    },
+
+    onError: (error: any) => {
+      if (error?.response?.data?.msg) {
+        toast({
+          title: error.response.data.msg,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Failed to create resource",
+          variant: "destructive"
+        });
+      }
+    }
+  });
+};
+```
+
+## Cache Invalidation
+
+### Specific Invalidation
+
+```typescript
+// ✅ Preferred - Specific invalidation
+queryClient.invalidateQueries({
+  queryKey: ["campaigns", projectId]
+});
+
+// ✅ Pattern invalidation for complex scenarios
+queryClient.refetchQueries({
+  predicate: (query) => {
+    const { queryKey } = query;
+    return Array.isArray(queryKey) && queryKey[0] === "user";
+  }
+});
+```
+
+## Error Handling
+
+### Expected API Error Format
+
+```typescript
+interface APIError {
+  response?: {
+    data?: {
+      msg?: string;
+      code?: number;
+    };
+  };
+}
+```
+
+### Standard Error Pattern
+
+```typescript
+onError: (error: APIError) => {
+  const errorMessage = error?.response?.data?.msg || "Operation failed";
+
+  toast({
+    title: errorMessage,
+    variant: "destructive"
+  });
+};
+```
+
+## TypeScript Integration
+
+### Response Type Pattern
+
+```typescript
+interface ProjectResponse extends IResponse<IProject[]> {}
+
+const { data: projects } = useQuery({
+  queryKey: ["projects"],
+  queryFn: (): Promise<ProjectResponse> => project.getAll(),
+  select: (res) => res.data
+});
+```
+
+### Query Function Typing
+
+```typescript
+const { data } = useQuery({
+  queryKey: ["project", projectId] as const,
+  queryFn: ({ queryKey }) =>
+    project.get({
+      project_id: parseInt(queryKey[1])
+    }),
+  enabled: !!projectId,
+  select: (res) => res.data?.[0]
+});
+```
+
+## Performance Optimizations
+
+### Query Key Factories
+
+```typescript
+const queryKeys = {
+  campaigns: (projectId: string) => ["campaigns", projectId] as const,
+  campaign: (projectId: string, campaignId: string) => ["campaigns", projectId, campaignId] as const
+} as const;
+```
+
+### Selective Re-rendering
+
+```typescript
+// ✅ Only re-render when specific field changes
+const { data: isActive } = useQuery({
+  queryKey: ["campaign", campaignId],
+  queryFn: () => campaign.get(campaignId),
+  select: (res) => res.data.active // Only this field
+});
+```
+
+## Data Layer Integration
+
+### API Service Pattern
+
+```typescript
+const campaignService = {
+  get: (params: GetCampaignRequest): Promise<IResponse<ICampaign>> => fetcher.get(endpoints.campaigns.get, params),
+
+  create: (data: CreateCampaignRequest): Promise<IResponse<ICampaign>> => fetcher.post(endpoints.campaigns.create, data)
+};
+```
+
+## Key Rules Summary
+
+- **ALWAYS** use descriptive, hierarchical query keys
+- **ALWAYS** use `select` to extract data from `IResponse<T>` wrappers
+- **ALWAYS** use `enabled` for dependent queries
+- **ALWAYS** handle errors with user-friendly toast messages
+- **ALWAYS** invalidate related cache after mutations
+- Use smart polling that stops when conditions are met
+- Create focused, reusable custom hooks
+- Type your API responses and use query key factories for consistency

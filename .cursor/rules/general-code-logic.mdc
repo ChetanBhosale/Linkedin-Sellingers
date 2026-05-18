@@ -1,0 +1,66 @@
+---
+alwaysApply: true
+description: >
+  Always retrieve the current user and selected project data from the RootContext.
+  Do not use query parameters for information that is already available in the context.
+globs:
+  - "**/*.tsx"
+  - "**/*.ts"
+  - "**/*.jsx"
+  - "**/*.js"
+---
+
+# Development Rule
+
+Whenever building any component or implementing functional logic that requires
+the current project information (e.g., `project_id`, `Project`, `ProjectMember`, etc.),
+you **must always** get this data from the `RootContext`.
+
+The following interfaces represent data that is already fully available
+through the application's RootContext and **should never be fetched using
+query parameters**:
+
+Also make sure there should no unused code left in the code.
+
+```ts
+
+export interface IUser {
+  id: number;
+  created_at: Date;
+  update_at: Date;
+  email: string;
+  first_name: string;
+  last_name: string;
+  company: string;
+  project_members: ProjectMember[];
+  _count: {
+    campaigns: number;
+  };
+}
+
+export interface ProjectMember {
+  id: number;
+  created_at: Date;
+  update_at: Date;
+  user_id: number;
+  role_id: number;
+  project_id: number;
+  project: Project;
+}
+
+export interface Project {
+  id: number;
+  created_at: Date;
+  update_at: Date;
+  name: string;
+  company: string;
+  app_store_link: string;
+  play_store_link: string;
+  website: string;
+  timezone: string | null;
+}
+
+```
+
+
+# Always check the component before using the component.

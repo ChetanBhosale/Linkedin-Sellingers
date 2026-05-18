@@ -1,0 +1,244 @@
+# Implementation Plan
+
+- [x] 1. Set up campaign page structure and types
+  - [x] 1.1 Create type definitions file for campaign page
+    - Create `src/types/campaign-page.ts` with ChannelFilter, StatusFilter, SortConfig, ColumnVisibility, CampaignAction types
+    - Define CHANNEL_ICONS mapping constant
+    - _Requirements: 1.3, 4.1, 5.1, 6.1_
+  - [x] 1.2 Create campaign page state hook
+    - Create `src/hooks/use-campaign-page-state.ts` with filter, sort, pagination, expansion state management
+    - Implement filter logic for search, channel, and status
+    - Implement sort logic for all sortable columns
+    - _Requirements: 3.2, 4.2, 5.2, 6.1, 6.2_
+  - [ ] 1.3 Write property test for filter logic
+    - **Property 6: Search filter correctness**
+    - **Property 8: Channel filter correctness**
+    - **Property 10: Status filter correctness**
+    - **Validates: Requirements 3.2, 4.2, 5.2**
+  - [ ] 1.4 Write property test for combined filters
+    - **Property 9: Combined filter intersection**
+    - **Validates: Requirements 4.4**
+  - [ ] 1.5 Write property test for sort logic
+    - **Property 11: Sort order correctness**
+    - **Validates: Requirements 6.1, 6.2**
+
+- [x] 2. Implement CampaignHeader component
+  - [x] 2.1 Create CampaignHeader component
+    - Create `src/components/campaigns/CampaignHeader.tsx`
+    - Implement title "All Campaigns" with heading3 typography
+    - Add view toggle group with list/card/chart icons (ListBullets, SquaresFour, ChartLine from Phosphor)
+    - Add Export button (secondary variant) and New Campaign button (primary variant)
+    - _Requirements: 7.1, 8.1_
+
+- [x] 3. Implement CampaignToolbar component
+  - [x] 3.1 Create CampaignToolbar component
+    - Create `src/components/campaigns/CampaignToolbar.tsx`
+    - Implement search input with MagnifyingGlass icon
+    - Implement channel filter dropdown (All, Meta, Google, TikTok, Organic)
+    - Implement status toggle (All, Active, Inactive)
+    - Implement column settings dropdown with checkboxes
+    - _Requirements: 3.1, 4.1, 5.1, 12.1, 12.2_
+  - [ ] 3.2 Write property test for column visibility
+    - **Property 16: Column visibility toggle**
+    - **Validates: Requirements 12.3, 12.4**
+
+- [x] 4. Implement CampaignTable component
+  - [x] 4.1 Create CampaignTable component
+    - Create `src/components/campaigns/CampaignTable.tsx`
+    - Implement table header with sortable columns (Channel, Campaign, Tags, Platform, Clicks, Installs, Sign-ups, Conversion, Last Updated, Actions)
+    - Add sort indicators (CaretUp/CaretDown icons)
+    - Use Table, TableHeader, TableHead, TableBody components
+    - _Requirements: 1.1, 6.3_
+  - [ ] 4.2 Write property test for row count
+    - **Property 1: Campaign row count matches data**
+    - **Validates: Requirements 1.2**
+
+- [x] 5. Implement CampaignRow component
+  - [x] 5.1 Create CampaignRow component
+    - Create `src/components/campaigns/CampaignRow.tsx`
+    - Implement expandable caret (CaretRight icon, rotates on expand)
+    - Display channel icon based on ad_network_code mapping
+    - Display campaign name with status dot (green for active, gray for inactive)
+    - Display platform chips (iOS, Android) using Chip component
+    - Display metrics (clicks, installs, sign-ups, conversion)
+    - Display network account name with copy button if present
+    - Display actions menu (DotsThree icon button with dropdown)
+    - _Requirements: 1.2, 1.3, 1.4, 1.5, 2.1, 9.1, 10.1, 10.2, 10.3, 10.4_
+  - [ ] 5.2 Write property test for channel icon mapping
+    - **Property 2: Channel icon mapping consistency**
+    - **Validates: Requirements 1.3**
+  - [ ] 5.3 Write property test for status dot color
+    - **Property 3: Active status dot color**
+    - **Validates: Requirements 1.4, 1.5**
+  - [ ] 5.4 Write property test for expandable caret
+    - **Property 4: Expandable caret visibility**
+    - **Validates: Requirements 2.1**
+  - [ ] 5.5 Write property test for platform chips
+    - **Property 13: Platform chip display**
+    - **Validates: Requirements 10.1, 10.2, 10.3**
+  - [ ] 5.6 Write property test for network account display
+    - **Property 14: Network account display**
+    - **Validates: Requirements 10.4**
+  - [ ] 5.7 Write property test for actions menu
+    - **Property 12: Actions menu presence**
+    - **Validates: Requirements 9.1**
+
+- [x] 12. Add Content column with shareable link functionality
+  - [x] 12.1 Add Content column to CampaignRow
+    - Update `src/components/campaigns/CampaignRow.tsx` to include Content column
+    - Position Content column to the left of Platform column
+    - For Meta campaigns: display ad set and creative counts (e.g., "1 ad set • 9 creatives")
+    - For non-Meta campaigns: display link icon button (Link from Phosphor icons)
+    - Implement click handler to copy campaign link to clipboard
+    - Display success toast notification on copy
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5_
+  - [x] 12.2 Update ColumnVisibility type to include content column
+    - Update `src/types/campaign-page.ts` to add content field to ColumnVisibility interface
+    - Update column settings dropdown to include Content column toggle
+    - _Requirements: 14.1_
+  - [x] 12.3 Update AdSetRow and AdCreativeRow for Content column
+    - Update `src/components/campaigns/AdSetRow.tsx` to include Content column cell
+    - Update `src/components/campaigns/AdCreativeRow.tsx` to include Content column cell
+    - Ensure proper alignment with parent campaign row
+    - _Requirements: 14.1_
+  - [x] 12.4 Update CampaignTable header to include Content column
+    - Update `src/components/campaigns/CampaignTable.tsx` to add Content column header
+    - Position header between Campaign Name and Platform columns
+    - _Requirements: 14.1_
+  - [ ]* 12.5 Write property test for content column Meta campaign display
+    - **Property 17: Content column Meta campaign display**
+    - **Validates: Requirements 14.2**
+  - [ ]* 12.6 Write property test for content column non-Meta campaign display
+    - **Property 18: Content column non-Meta campaign display**
+    - **Validates: Requirements 14.3**
+  - [ ]* 12.7 Write property test for link copy functionality
+    - **Property 19: Content column link copy functionality**
+    - **Validates: Requirements 14.4, 14.5**
+
+- [x] 6. Implement AdSetRow and AdCreativeRow components
+  - [x] 6.1 Create AdSetRow component
+    - Create `src/components/campaigns/AdSetRow.tsx`
+    - Implement with indentation (depth-based padding)
+    - Display folder icon, ad set name with status dot
+    - Display expandable caret if has ad creatives
+    - Display metrics matching parent structure
+    - _Requirements: 2.2, 2.3_
+  - [x] 6.2 Create AdCreativeRow component
+    - Create `src/components/campaigns/AdCreativeRow.tsx`
+    - Implement with deeper indentation
+    - Display image icon, creative name with status dot
+    - Display creative thumbnail if available
+    - Display metrics matching parent structure
+    - _Requirements: 2.4_
+  - [ ] 6.3 Write property test for expand/collapse round-trip
+    - **Property 5: Expand/collapse round-trip**
+    - **Validates: Requirements 2.2, 2.4, 2.5**
+
+- [x] 7. Implement CampaignPagination component
+  - [x] 7.1 Create CampaignPagination component
+    - Create `src/components/campaigns/CampaignPagination.tsx`
+    - Display "Showing X - Y of Z results" text
+    - Implement previous/next buttons (CaretLeft/CaretRight icons)
+    - Disable previous on first page, next on last page
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+  - [ ] 7.2 Write property test for pagination range
+    - **Property 15: Pagination range accuracy**
+    - **Validates: Requirements 11.1, 11.2, 11.3**
+
+- [x] 8. Integrate components in CampaignsPage with tabs
+  - [x] 8.1 Create CampaignTabs component
+    - Create `src/components/campaigns/CampaignTabs.tsx`
+    - Implement tabs for "Channel" and "Campaigns" views
+    - Use query params for tab navigation (similar to settings page pattern)
+    - _Requirements: 1.1_
+  - [x] 8.2 Create dynamic route page for campaigns
+    - Create `src/pages/dashboard/campaigns/[tab].tsx`
+    - Implement tab-based routing with "channels" and "campaigns" tabs
+    - Wire up all state management from use-campaign-page-state hook
+    - Connect CampaignHeader, CampaignTabs, CampaignToolbar, CampaignTable, CampaignPagination
+    - _Requirements: 1.1, 7.2, 7.3_
+  - [x] 8.3 Update campaigns index page to redirect
+    - Update `src/pages/dashboard/campaigns.tsx` to redirect to default tab
+    - _Requirements: 1.1_
+  - [x] 8.4 Implement ChannelsView component
+    - Create channels view that groups campaigns by channel (Meta, Google, TikTok, Organic)
+    - Display campaign cards with status, name, and metrics
+    - _Requirements: 1.1_
+  - [ ] 8.5 Write property test for search clear
+    - **Property 7: Search clear restores all**
+    - **Validates: Requirements 3.4**
+
+- [x] 9. Implement actions dropdown menu
+  - [x] 9.1 Create CampaignActionsMenu component
+    - Create `src/components/campaigns/CampaignActionsMenu.tsx`
+    - Implement dropdown with View Details, Edit, Copy Link, Delete options
+    - Use DropdownMenu component from ui
+    - Handle action callbacks
+    - _Requirements: 9.2, 9.3_
+
+- [x] 10. Add empty state handling
+  - [x] 10.1 Create CampaignEmptyState component
+    - Create `src/components/campaigns/CampaignEmptyState.tsx`
+    - Display when no campaigns match filters
+    - Show illustration and helpful message
+    - _Requirements: 3.3_
+
+- [x] 13. Implement Campaign Details Drawer
+  - [x] 13.1 Create CampaignDetailsDrawer component
+    - Create `src/components/campaigns/CampaignDetailsDrawer.tsx`
+    - Use Drawer component from `src/components/ui/drawer.tsx` with side="right" and width="70%"
+    - Integrate with campaign details API using React Query
+    - Handle loading, error, and success states
+    - _Requirements: 15.1, 15.8_
+  - [x] 13.2 Create CampaignDrawerHeader component
+    - Create `src/components/campaigns/CampaignDrawerHeader.tsx`
+    - Display channel icon (Meta/Google/TikTok) and campaign name
+    - Add action buttons: QR code download, share, download data, edit (using IconButton)
+    - Add date range picker control
+    - _Requirements: 15.2, 15.3_
+  - [x] 13.3 Create CampaignDrawerMetrics component
+    - Create `src/components/campaigns/CampaignDrawerMetrics.tsx`
+    - Display horizontal row of 6 metrics: Clicks, Installs, Sign Ups, Spend, Revenue, Paying Customers
+    - Each metric shows label and value with border-left separator
+    - Add skeleton loading state
+    - _Requirements: 15.4, 15.7_
+  - [x] 13.4 Create CampaignDrawerChart component
+    - Create `src/components/campaigns/CampaignDrawerChart.tsx`
+    - Use recharts AreaChart with Clicks (orange), Installs (green), Sign Ups (blue) lines
+    - Add Y-axis labels and X-axis date labels
+    - Add legend below chart
+    - Add skeleton loading state matching table loading pattern
+    - _Requirements: 15.5, 15.7_
+  - [x] 13.5 Create CampaignDrawerUserTable component
+    - Create `src/components/campaigns/CampaignDrawerUserTable.tsx`
+    - Display table with columns: User ID (with copy icon), Name, Email, Phone, Created At
+    - Use Table components from ui
+    - Add skeleton loading state
+    - Implement copy to clipboard for User ID
+    - _Requirements: 15.6, 15.7, 15.9_
+  - [x] 13.6 Create useCampaignDetails hook
+    - Create `src/hooks/use-campaign-details.ts`
+    - Fetch campaign details using campaign.getDetails API
+    - Handle date range filtering
+    - Return loading, error, and data states
+    - _Requirements: 15.1, 15.3_
+  - [x] 13.7 Integrate drawer with CampaignRow
+    - Update `src/components/campaigns/CampaignRow.tsx` to handle row click
+    - Add onClick handler that opens drawer (excluding expand caret and actions menu clicks)
+    - Pass selected campaign to drawer
+    - _Requirements: 15.1_
+  - [x] 13.8 Wire up drawer in campaigns page
+    - Update `src/pages/dashboard/campaigns.tsx` to include CampaignDetailsDrawer
+    - Add state for selected campaign and drawer open state
+    - Connect drawer to campaign selection
+    - _Requirements: 15.1, 15.8_
+  - [ ]* 13.9 Write property test for drawer open behavior
+    - **Property 20: Campaign drawer opens on row click**
+    - **Validates: Requirements 15.1**
+  - [ ]* 13.10 Write property test for drawer data display
+    - **Property 21: Drawer displays correct campaign data**
+    - **Validates: Requirements 15.2**
+
+- [ ] 14. Final Checkpoint - Make sure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+

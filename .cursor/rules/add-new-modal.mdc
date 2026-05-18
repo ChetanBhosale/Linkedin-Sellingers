@@ -1,0 +1,381 @@
+---
+description: "Standardized modal implementation pattern with proper button styling"
+alwaysApply: true
+---
+
+# Modal Implementation Pattern
+
+**CRITICAL: Always use the Modal components from `@/components/ui/modal`, NOT Dialog components.**
+
+## 1. Register the Modal
+
+In `src/hooks/use-modal.tsx`, add your key and slug to `MODALS`:
+
+```ts
+export const MODALS = {
+  // …existing entries
+  your_new_modal: "your-new-modal"
+};
+```
+
+## 2. Create the Modal Component
+
+**ALWAYS use the Modal component structure:**
+
+```tsx
+import {
+  ModalRoot,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription, // Optional
+  ModalBody,
+  ModalFooter, // Optional, only if you have footer actions
+} from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  // Add other props as needed
+};
+
+export const YourNewModal = ({ open, onOpenChange }: Props) => {
+  return (
+    <ModalRoot open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="md"> {/* Use: "sm" | "md" | "lg" | "xl" | "full" */}
+        <ModalHeader>
+          <ModalTitle>Your Modal Title</ModalTitle>
+          {/* Optional description */}
+          <ModalDescription>
+            Optional description text here
+          </ModalDescription>
+        </ModalHeader>
+
+        <ModalBody>
+          {/* Your modal content here */}
+        </ModalBody>
+
+        {/* Optional footer - only include if you have action buttons */}
+        <ModalFooter>
+          {/* Footer content with buttons */}
+        </ModalFooter>
+      </ModalContent>
+    </ModalRoot>
+  );
+};
+
+export default YourNewModal;
+```
+
+**For modals WITH data:**
+
+```tsx
+import {
+  ModalRoot,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+} from "@/components/ui/modal";
+import { useModals } from "@/hooks/use-modal";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export const YourNewModal = ({ open, onOpenChange }: Props) => {
+  const { your_new_modal } = useModals();
+  const modalData = your_new_modal.data;
+
+  return (
+    <ModalRoot open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="md">
+        <ModalHeader>
+          <ModalTitle>Your Modal Title</ModalTitle>
+        </ModalHeader>
+
+        <ModalBody>
+          {/* Access modal data via `modalData` */}
+          {modalData && <div>Received: {JSON.stringify(modalData)}</div>}
+        </ModalBody>
+      </ModalContent>
+    </ModalRoot>
+  );
+};
+
+export default YourNewModal;
+```
+
+## 3. Button Styling in Modals
+
+**ALWAYS use these button props and styling in modals:**
+
+### Button Variants (in order of usage frequency):
+- `variant="primary"` - Primary action buttons (Submit, Save, Confirm, etc.)
+- `variant="outlined"` - Secondary actions (Cancel, Back, Download, etc.)
+- `variant="secondary"` - Alternative secondary styling
+- `variant="text"` - Text-only buttons for less prominent actions
+
+### Button Sizes:
+- `size="md"` - **DEFAULT and most common** - Use for most modal buttons
+- `size="lg"` - For prominent primary actions when needed
+- `size="sm"` - For compact spaces or less important actions
+
+### Standard Button Pattern:
+
+```tsx
+<ModalFooter>
+  {/* Left side - Cancel/Back buttons */}
+  <Button
+    variant="outlined"
+    size="md"
+    onClick={handleCancel}
+    disabled={isPending}
+    type="button"
+  >
+    Cancel
+  </Button>
+
+  {/* Right side - Primary action */}
+  <div className="flex items-center gap-4">
+    <Button
+      variant="primary"
+      size="md"
+      onClick={handleSubmit}
+      disabled={isPending}
+      loading={isPending} // Use loading prop for async actions
+      type="button" // Always use type="button" unless it's a form submit
+    >
+      Submit
+    </Button>
+  </div>
+</ModalFooter>
+```
+
+### Footer Layout Patterns:
+
+**Pattern 1: Justified (Back on left, Primary on right)**
+```tsx
+<ModalFooter className="justify-between">
+  <Button variant="outlined" size="md" onClick={onClose}>
+    Back
+  </Button>
+  <Button variant="primary" size="md" onClick={onSubmit}>
+    Next
+  </Button>
+</ModalFooter>
+```
+
+**Pattern 2: Centered actions**
+```tsx
+<ModalFooter>
+  <div className="flex gap-3 w-full justify-center">
+    <Button variant="outlined" size="md" onClick={action1}>
+      Action 1
+    </Button>
+    <Button variant="outlined" size="md" onClick={action2}>
+      Action 2
+    </Button>
+  </div>
+</ModalFooter>
+```
+
+**Pattern 3: Right-aligned actions**
+```tsx
+<ModalFooter>
+  <div className="flex items-center gap-2 ml-auto">
+    <Button variant="outlined" size="md" onClick={onCancel}>
+      Cancel
+    </Button>
+    <Button variant="primary" size="md" onClick={onSubmit}>
+      Save
+    </Button>
+  </div>
+</ModalFooter>
+```
+
+### Button with Icons:
+
+```tsx
+<Button
+  variant="outlined"
+  size="md"
+  onClick={handleAction}
+  className="flex gap-2" // Add gap for icon spacing
+>
+  <DownloadSimple size={16} /> {/* Icon size: 16 for md buttons */}
+  Download
+</Button>
+```
+
+## 4. Wire it up
+
+In the layout or page where the modal belongs:
+
+```tsx
+import { useModals } from "@/hooks/use-modal";
+import YourNewModal from "@/components/modals/your-new-modal";
+
+const SomePage = () => {
+  const { your_new_modal } = useModals();
+
+  return (
+    <>
+      {/* …other content… */}
+
+      <YourNewModal open={your_new_modal.state} onOpenChange={your_new_modal.toggle} />
+    </>
+  );
+};
+```
+
+## 5. Opening & Closing Modals
+
+   **Basic usage (no data):**
+
+   ```ts
+   const { your_new_modal } = useModals();
+   your_new_modal.toggle(true); // open
+   your_new_modal.toggle(false); // close
+   ```
+
+   **With data passing:**
+
+   ```ts
+   const { your_new_modal } = useModals();
+
+   // Open with data
+   your_new_modal.toggle(true, {
+     data: { userId: 123, name: "John" }
+   });
+
+   // Set data without opening
+   your_new_modal.setData({ userId: 456 });
+
+   // Access current data
+   console.log(your_new_modal.data);
+
+   // Clear data
+   your_new_modal.clearData();
+   ```
+
+   **Using the convenience hook:**
+
+   ```ts
+   import { useModalWithData } from "@/hooks/use-modal";
+
+   const { openWithData, close, data } = useModalWithData("your_new_modal");
+
+   // Open with data
+   openWithData({ userId: 123, response: apiResponse });
+
+   // Close modal
+   close();
+   ```
+
+## 6. Data Management
+
+- Data is automatically stored in localStorage with key `modal_data_{modal-name}`
+- Data is automatically cleared when modal closes
+- Data persists across page refreshes while modal is open
+- Data is automatically cleaned up when switching between modals
+
+## 7. Complete Example
+
+Here's a complete example following all conventions:
+
+```tsx
+import { useState } from "react";
+import {
+  ModalRoot,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+} from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export const ExampleModal = ({ open, onOpenChange }: Props) => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    // Your async logic here
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsLoading(false);
+    toast({ title: "Success!" });
+    onOpenChange(false);
+  };
+
+  return (
+    <ModalRoot open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="md">
+        <ModalHeader>
+          <ModalTitle>Example Modal</ModalTitle>
+        </ModalHeader>
+
+        <ModalBody>
+          <div className="flex flex-col gap-4">
+            <Input placeholder="Enter value..." />
+            {/* Your form content here */}
+          </div>
+        </ModalBody>
+
+        <ModalFooter className="justify-between">
+          <Button
+            variant="outlined"
+            size="md"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+            type="button"
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleSubmit}
+            disabled={isLoading}
+            loading={isLoading}
+            type="button"
+          >
+            Submit
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </ModalRoot>
+  );
+};
+
+export default ExampleModal;
+```
+
+## Key Rules Summary
+
+✅ **ALWAYS:**
+- Use `ModalRoot`, `ModalContent`, `ModalHeader`, `ModalTitle`, `ModalBody`, `ModalFooter` from `@/components/ui/modal`
+- Use `size="md"` for ModalContent (default)
+- Use `variant="outlined"` and `size="md"` for secondary buttons
+- Use `variant="primary"` and `size="md"` for primary action buttons
+- Include `type="button"` on buttons unless it's a form submit
+- Use `loading` prop for async button states
+- Use `disabled` prop when action is not available
+
+❌ **NEVER:**
+- Use `Dialog` or `DialogContent` components
+- Use `variant="outline"` (use `variant="outlined"` instead)
+- Omit button size prop (always specify `size="md"` or appropriate size)
+- Use inline styles for buttons (use variant and size props)

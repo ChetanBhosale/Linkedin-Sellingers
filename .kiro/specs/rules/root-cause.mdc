@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+description: Fix issues from the root cause to prevent them from recurring.
+---
+
+# Development Rule:
+# Always resolve problems at their root rather than applying temporary patches.
+# Each issue should be fixed thoroughly so it only occurs once and never appears again.
+# Ask question if you want to understand more how the issues fixes, provide the details answer what is causing the how can we fix this with approches

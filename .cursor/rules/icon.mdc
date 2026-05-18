@@ -1,0 +1,11 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Rule: Icon Placement in UI
+
+- Every icon used in the UI must be placed inside a Shadcn button component (`Button` from `src/components/ui/button.tsx`).
+- This applies to all interactive icons, including those for actions, navigation, and toolbars.
+- The only exception is for purely decorative, non-interactive icons (such as those used in illustrations or static images), which do not require a button wrapper.
+- This ensures consistent accessibility, focus, and hover states across the application.

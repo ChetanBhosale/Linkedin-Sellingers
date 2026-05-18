@@ -1,0 +1,122 @@
+# PostHog Analytics Events Guide
+
+## Overview
+
+This project uses PostHog for analytics tracking. All events are tracked through a centralized `useAnalytics` hook that automatically injects common properties (project_id, project_name, user_id, user_email, username).
+
+## Key Files
+
+- `src/constants/analytics-events.ts` - All event name constants
+- `src/hooks/use-analytics.ts` - Analytics hook with `trackEvent` function
+- `src/utils/posthog.ts` - PostHog utility functions
+
+## How to Add a New Event
+
+### Step 1: Check if Event Already Exists
+
+Before creating a new event, check `src/constants/analytics-events.ts` to see if an existing event covers your use case. **IMPORTANT**: Reuse existing events when possible to maintain data continuity in PostHog.
+
+### Step 2: Add Event Constant (if new)
+
+Add your event to `src/constants/analytics-events.ts`:
+
+```typescript
+// For NEW functionality only - add to the "NEW EVENTS" section
+export const ANALYTICS_EVENTS = {
+  // ... existing events ...
+  
+  // NEW EVENTS section
+  MY_NEW_EVENT: "my_new_event",
+} as const;
+```
+
+**Naming Convention:**
+- Use `snake_case` for event names
+- Use `SCREAMING_SNAKE_CASE` for constant keys
+- Be descriptive: `button_clicked` → `campaign_edit_clicked`
+
+### Step 3: Track the Event in Your Component
+
+```typescript
+import { useAnalytics } from "@/hooks/use-analytics";
+import { ANALYTICS_EVENTS } from "@/constants/analytics-events";
+
+function MyComponent() {
+  const { trackEvent } = useAnalytics();
+
+  const handleClick = () => {
+    trackEvent(ANALYTICS_EVENTS.MY_NEW_EVENT, {
+      // Add event-specific properties
+      item_name: "example",
+      action_type: "click",
+    });
+  };
+
+  return <button onClick={handleClick}>Click me</button>;
+}
+```
+
+## Existing Events Reference
+
+### Campaign Events (from archive - DO NOT CREATE NEW)
+- `campaign_created` - When a campaign is created
+- `campaign_viewed` - When campaign details drawer opens
+- `campaign_row_clicked` - When clicking a campaign row in table
+- `campaign_expanded` / `campaign_collapsed` - Row expand/collapse
+- `campaign_active_toggled` - Toggle campaign status
+- `campaign_link_copied` - Copy campaign link
+- `campaign_search` - Search campaigns
+- `campaign_pagination` - Page navigation
+- `campaign_date_range_selected` - Date filter change
+- `campaign_sort_changed` - Sort change
+- `campaign_qrcode_downloaded` - QR code download
+- `campaign_users_exported` - Export user data
+
+### AdSet Events
+- `adset_expanded` / `adset_collapsed` - AdSet row expand/collapse
+
+### Settings Events
+- `setting_viewed` - View a setting
+- `setting_page_viewed` - View settings page
+
+### Share Events
+- `share_campaign_invite_sent` - Share campaign
+
+## Common Properties (Auto-Injected)
+
+Every event automatically includes:
+- `project_id` - Current project ID
+- `project_name` - Current project name
+- `user_id` - Current user ID
+- `user_email` - Current user email
+- `username` - Current user's full name
+- `timestamp` - ISO 8601 timestamp
+
+## Best Practices
+
+1. **Reuse existing events** - Check the archive list before creating new events
+2. **Include context** - Add relevant properties like `campaign_id`, `campaign_name`
+3. **Use constants** - Never hardcode event names as strings
+4. **Debounce search events** - Use 500ms debounce for search inputs
+5. **Track meaningful actions** - Focus on user intent, not every click
+
+## Example: Adding Campaign Filter Event
+
+```typescript
+// In CampaignToolbar.tsx
+const { trackEvent } = useAnalytics();
+
+const handleStatusFilterChange = (status: string) => {
+  onStatusFilterChange(status);
+  trackEvent(ANALYTICS_EVENTS.CAMPAIGN_STATUS_FILTER, { 
+    status 
+  });
+};
+```
+
+## Debugging
+
+In development mode, all tracked events are logged to the console:
+```
+[Analytics] campaign_row_clicked { campaign_name: "My Campaign", ... }
+```

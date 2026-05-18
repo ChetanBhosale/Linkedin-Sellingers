@@ -1,0 +1,29 @@
+---
+alwaysApply: false
+---
+
+# Task
+Based on the Figma link and component name provided at the end of this prompt, implement the specified UI component exactly as designed in the Figma file. Replicate all visual and behavioral details to ensure pixel-perfect fidelity. Focus exclusively on the named component unless dependencies require adjustments (see Dependencies section below).
+
+## Core Requirements
+
+### Match Figma Exactly
+- **Visual Fidelity**: Implement identical colors, sizes (widths, heights, font sizes), spacing (padding, margins, gaps), icons, typography (fonts, weights, line heights), layouts, and alignments.
+- **States & Interactions**: Include all states (default, hover, active, focus, disabled, loading, etc.) and interactions (transitions, animations, hover effects) as shown in Figma prototypes or variants.
+- **Behavior Replication**: Always inspect the Figma component for behaviors like tooltips, modals, expansions, or conditional visibility. Replicate these in code using React state, event handlers, or integrations (e.g., Radix UI primitives). Test for consistency across desktop and mobile views.
+
+### Variants, Sizes, and Props
+- **Variants & Sizes**: Expose and implement all variants (e.g., primary, secondary, outline) and size options (e.g., sm, md, lg) from Figma.
+- **Icons & Flexibility**: Support icon placements (leading, trailing, inside) via props. Use a clean, intuitive props API (e.g., `variant`, `size`, `disabled`, `iconLeading`, `iconTrailing`, `onClick`).
+- **Example Props Shape**:
+  ```tsx
+  interface ComponentProps {
+    variant?: 'default' | 'outline' | 'ghost';
+    size?: 'sm' | 'md' | 'lg';
+    disabled?: boolean;
+    iconLeading?: React.ReactNode;
+    iconTrailing?: React.ReactNode;
+    children: React.ReactNode;
+    onClick?: () => void;
+    // Add Figma-specific props as needed (e.g., loading: boolean)
+  }
