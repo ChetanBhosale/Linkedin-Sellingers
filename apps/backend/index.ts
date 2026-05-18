@@ -1,8 +1,9 @@
 import express from 'express'
 import type {Request,Response} from 'express'
 const app = express()
+import ENVS from '@repo/secrets'
 
-const PORT = process.env.PORT || 4000
+const {PORT} = ENVS;
 
 // health check endpoint
 app.get('/health', (req:Request,res:Response) => res.status(201).send('Healthy!'))
