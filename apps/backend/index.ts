@@ -1,16 +1,17 @@
 import express from 'express'
-import type {Request,Response} from 'express'
-const app = express()
+import type { Request, Response } from 'express'
 import ENVS from '@repo/secrets'
+import indexRoutes from './route/index.route'
 
-const {PORT} = ENVS;
+const app = express()
 
-// health check endpoint
-app.get('/health', (req:Request,res:Response) => res.status(201).send('Healthy!'))
+app.use(express.json())
 
-app.listen(PORT,(err) => {
-    if(err){
-        process.exit(1)
-    }
+app.get('/health', (_req: Request, res: Response) => res.status(200).send('Healthy!'))
+
+app.use('/api', indexRoutes)
+
+const { PORT } = ENVS
+app.listen(PORT, () => {
     console.log(`Server started successfully on PORT : ${PORT}`)
 })
